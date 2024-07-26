@@ -10,7 +10,7 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('admins');
   final CollectionReference productCollection =
       FirebaseFirestore.instance.collection('products');
-  final CollectionReference CategoryCollection =
+  final CollectionReference categoryCollection =
       FirebaseFirestore.instance.collection('categories');
 
   Future savingUserData(String fullName, String email) async {
@@ -39,23 +39,38 @@ class DatabaseService {
         'Pid': "",
       },
     );
-
+    await categoryCollection.doc(product.code).update({
+      'Products': FieldValue.arrayUnion(["${productDoc.id}_${product.name}"])
+    });
     await productDoc.update({'Pid': productDoc.id});
 
     return productDoc;
   }
 
   Future addCategory(Categorymodel catmodel) async {
-    DocumentReference catDoc = await CategoryCollection.add(
-      {
-        'name': catmodel.name,
-        'image': catmodel.image,
-        'Products': catmodel.products,
-      },
-    );
+    // Check if a category with the same name already exists
+    try {
+      QuerySnapshot snapshot = await categoryCollection
+          .where("name", isEqualTo: catmodel.name)
+          .get();
 
-    await catDoc.update({'code': catDoc.id});
+      if (snapshot.docs.isNotEmpty) {
+        throw "Category with the same name already exists";
+      } else {
+        DocumentReference catDoc = await categoryCollection.add(
+          {
+            'name': catmodel.name,
+            'image': catmodel.image,
+            'Products': catmodel.products,
+          },
+        );
 
-    return catDoc;
+        await catDoc.update({'code': catDoc.id});
+
+        return catDoc;
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 }

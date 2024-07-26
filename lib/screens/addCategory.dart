@@ -98,25 +98,29 @@ class _AddCategoryState extends State<AddCategory> {
                               imgbbResponse =
                                   ImgbbResponseModel.fromJson(response);
                               if (imgbbResponse!.status == 200) {
-                                databaseService
-                                    .addCategory(
-                                  Categorymodel(
+                                try {
+                                  Categorymodel categoryModel = Categorymodel(
                                     name: nameController.text,
-                                    code: "",
                                     image: imgbbResponse!.data!.displayUrl!,
-                                  ),
-                                )
-                                    .then((val) {
+                                    code: "",
+                                  );
+                                  await databaseService
+                                      .addCategory(categoryModel);
+                                  showSnackBar(
+                                      context, Colors.green, "Category Added");
                                   setState(() {
                                     loading = false;
                                   });
-                                  showSnackBar(context, Colors.green,
-                                      "Category Added Successfully");
-                                  // Navigator.pop(context);
-                                });
+                                } catch (e) {
+                                  setState(() {
+                                    loading = false;
+                                  });
+                                  showSnackBar(
+                                      context, Colors.red, e.toString());
+                                }
                               }
                             } catch (e) {
-                              // showSnackBar(context, Colors.red,
+                              showSnackBar(context, Colors.red, e.toString());
                               //     "Error Uploading Image, Try Again");
                             }
                           } else {

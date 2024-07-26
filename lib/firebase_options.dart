@@ -60,7 +60,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCgEuTuFpq7lau48S_cISPL2BLpz2ihslM',
-    appId: '1:984416317446:ios:43b289021dc8e9f9109387',
+    appId: '1:984416317446:ios:d5f296ba7b4e7285109387',
     messagingSenderId: '984416317446',
     projectId: 'doindia-f8fd5',
     storageBucket: 'doindia-f8fd5.appspot.com',
@@ -69,7 +69,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCgEuTuFpq7lau48S_cISPL2BLpz2ihslM',
-    appId: '1:984416317446:ios:43b289021dc8e9f9109387',
+    appId: '1:984416317446:ios:d5f296ba7b4e7285109387',
     messagingSenderId: '984416317446',
     projectId: 'doindia-f8fd5',
     storageBucket: 'doindia-f8fd5.appspot.com',
@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'doindia-f8fd5.appspot.com',
     measurementId: 'G-GJD1J7JSGY',
   );
+
 }

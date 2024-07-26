@@ -14,6 +14,7 @@ List myGridElements = [
   ["Add Product", AddProduct(), Icons.add],
   ["Add Category", AddCategory(), Icons.category],
   ["View Enquires", OtploginScreen(), Icons.support_agent_outlined],
+  ["Manage Stock", OtploginScreen(), Icons.warehouse],
   ["View/Edit Products", OtploginScreen(), Icons.view_list],
   ["View/Edit Categories", OtploginScreen(), Icons.category],
   ["View/Add Admins", OtploginScreen(), Icons.person],

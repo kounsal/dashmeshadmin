@@ -39,7 +39,7 @@ class _AddProductState extends State<AddProduct> {
         title: Text('Add Product'),
       ),
       body: loading
-          ? CircularProgressIndicator()
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               scrollDirection: Axis.vertical,
               physics: BouncingScrollPhysics(),
@@ -121,6 +121,9 @@ class _AddProductState extends State<AddProduct> {
                               nosController.text.isNotEmpty &&
                               _image != null) {
                             try {
+                              setState(() {
+                                loading = true;
+                              });
                               var response =
                                   await _imageService.uploadImage(_image!);
                               imgbbResponse =
@@ -130,7 +133,7 @@ class _AddProductState extends State<AddProduct> {
                                     .addProduct(
                                   Productmodel(
                                     name: nameController.text,
-                                    code: codeController.text,
+                                    code: "FRFua4OaTpZ7Xw3KpNHQ",
                                     height: sizeheightController.text,
                                     width: sizewidthController.text,
                                     pieces: nosController.text,
@@ -138,12 +141,26 @@ class _AddProductState extends State<AddProduct> {
                                   ),
                                 )
                                     .then((val) {
+                                  setState(() {
+                                    loading = false;
+                                    nameController.clear();
+                                    codeController.clear();
+                                    sizeheightController.clear();
+                                    sizewidthController.clear();
+                                    nosController.clear();
+                                    _image = null;
+                                  });
+
+                                  // Navigator.pop(context);
                                   showSnackBar(context, Colors.green,
                                       "Product Added Successfully");
                                 });
                               }
                             } catch (e) {
-                              print(e);
+                              setState(() {
+                                loading = false;
+                              });
+                              showSnackBar(context, Colors.red, e.toString());
                             }
 
                             print("All fields are filled");
@@ -168,7 +185,7 @@ class _AddProductState extends State<AddProduct> {
                             color: Colors.deepPurple,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Center(
+                          child: const Center(
                             child: Text(
                               'Add Product',
                               style: TextStyle(
@@ -185,5 +202,15 @@ class _AddProductState extends State<AddProduct> {
               ),
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    codeController.dispose();
+    sizeheightController.dispose();
+    sizewidthController.dispose();
+    nosController.dispose();
+    super.dispose();
   }
 }

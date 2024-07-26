@@ -44,14 +44,4 @@ class AuthServices {
       return e.message;
     }
   }
-
-  // Future userLogin(String email, String password) async {
-  //   await FirebaseAuth.instance
-  //       .signInWithEmailAndPassword(email: email, password: password)
-  //       .then((value) => print("User Logged In"))
-  //       .catchError((onError) => print("Error"));
-  // }
-// void UserRegisterPhone(){
-//   FirebaseAuth.instance.
-// }
 }
