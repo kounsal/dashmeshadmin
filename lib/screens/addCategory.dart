@@ -108,7 +108,10 @@ class _AddCategoryState extends State<AddCategory> {
                                       .addCategory(categoryModel);
                                   showSnackBar(
                                       context, Colors.green, "Category Added");
+
                                   setState(() {
+                                    nameController.clear();
+                                    _image = null;
                                     loading = false;
                                   });
                                 } catch (e) {

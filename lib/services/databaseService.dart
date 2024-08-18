@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dashmeshadmin/models/categoryModel.dart';
+import 'package:dashmeshadmin/models/customerModel.dart';
 import 'package:dashmeshadmin/models/productmodel.dart';
 
 class DatabaseService {
-  final String uid;
-  DatabaseService({required this.uid});
+  String? uid;
+  DatabaseService({this.uid});
 
   final CollectionReference userCollection =
       FirebaseFirestore.instance.collection('admins');
@@ -12,6 +13,8 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('products');
   final CollectionReference categoryCollection =
       FirebaseFirestore.instance.collection('categories');
+  final CollectionReference customerCollection =
+      FirebaseFirestore.instance.collection('customers');
 
   Future savingUserData(String fullName, String email) async {
     return await userCollection.doc(uid).set({
@@ -72,5 +75,40 @@ class DatabaseService {
     } catch (e) {
       throw Exception(e.toString());
     }
+  }
+
+  Future addCustomer(Customermodel customerModel) async {
+    // Check if a category with the same name already exists
+    try {
+      QuerySnapshot snapshot = await customerCollection
+          .where("phone", isEqualTo: customerModel.phone)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        throw "Customer already exists";
+      } else {
+        DocumentReference custDoc = await customerCollection.add(
+          {
+            'name': customerModel.name,
+            'phone': customerModel.phone,
+            'email': customerModel.email ?? "",
+            'buisnessname': customerModel.buisnessname ?? "",
+            'address': customerModel.address ?? "",
+            'gstin': customerModel.gstin ?? "",
+            'orders': customerModel.orders ?? [],
+          },
+        );
+
+        await custDoc.update({'custId': custDoc.id});
+
+        return custDoc;
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  Future getCustomerData() async {
+    return customerCollection.orderBy("name").snapshots();
   }
 }

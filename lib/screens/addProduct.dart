@@ -28,8 +28,7 @@ class _AddProductState extends State<AddProduct> {
   TextEditingController sizewidthController = TextEditingController();
   TextEditingController sizeheightController = TextEditingController();
   TextEditingController nosController = TextEditingController();
-  DatabaseService databaseService =
-      DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid);
+  DatabaseService databaseService = DatabaseService();
 
   @override
   Widget build(BuildContext context) {

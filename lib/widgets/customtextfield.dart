@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
 class CustomText extends StatelessWidget {
-  const CustomText({
+  CustomText({
     super.key,
     required this.text,
     required this.textController,
-    required this.paddinhorizontal,
-    required this.paddingvertical,
+    this.paddinhorizontal,
+    this.paddingvertical,
   });
 
   final String text;
   final TextEditingController textController;
-  final double paddinhorizontal, paddingvertical;
+  double? paddinhorizontal, paddingvertical;
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-          horizontal: paddinhorizontal, vertical: paddingvertical),
+          horizontal: paddinhorizontal ?? 10, vertical: paddingvertical ?? 10),
       child: TextField(
         obscureText: text == "Password" ? true : false,
         decoration: InputDecoration(
