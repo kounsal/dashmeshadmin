@@ -4,11 +4,14 @@ import 'package:dashmeshadmin/models/invoice.dart';
 import 'package:dashmeshadmin/services/pdf_api.dart';
 import 'package:dashmeshadmin/utils/util.dart';
 import 'package:flutter/services.dart';
-import 'package:pdf/widgets.dart' as pw;
 
+import 'package:number2words/number2words.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 
 class PdfInvoiceApi {
+  static const int itemsPerPage = 8; // Number of items per page
+
   static Future<File> generate(Invoice invoice) async {
     final pdf = pw.Document();
 
@@ -16,31 +19,51 @@ class PdfInvoiceApi {
     final ttf = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
     final font = pw.Font.ttf(ttf);
 
-    pdf.addPage(pw.MultiPage(
-      margin: const pw.EdgeInsets.all(1 * PdfPageFormat.cm),
-      pageFormat: PdfPageFormat.a4,
-      build: (context) => [
-        pw.Center(
-            child: pw.Text("TAX INVOICE",
-                style:
-                    pw.TextStyle(fontWeight: pw.FontWeight.bold, font: font))),
-        pw.SizedBox(height: 1 * PdfPageFormat.mm),
-        pw.Container(
+    final itemChunks = _chunkItems(invoice.items,
+        invoice.items.length % 8 == 0 ? itemsPerPage - 1 : itemsPerPage);
+
+    for (int i = 0; i < itemChunks.length; i++) {
+      pdf.addPage(pw.MultiPage(
+        margin: const pw.EdgeInsets.all(1 * PdfPageFormat.cm),
+        pageFormat: PdfPageFormat.a4,
+        build: (context) => [
+          if (i == 0) ...[
+            pw.Center(
+              child: pw.Text("TAX INVOICE",
+                  style:
+                      pw.TextStyle(fontWeight: pw.FontWeight.bold, font: font)),
+            ),
+            pw.SizedBox(height: 1 * PdfPageFormat.mm),
+          ],
+          pw.Container(
             height: PdfPageFormat.a4.height - 3.5 * PdfPageFormat.cm,
             decoration: pw.BoxDecoration(
               border: pw.Border.all(color: PdfColors.black, width: 1),
             ),
             child: pw.Column(children: [
               buildHeader(invoice, font),
-              // pw.SizedBox(height: 1.5 * PdfPageFormat.cm),
-              buildInvoice(invoice, font),
-
-              buildTotal(invoice, font),
-            ])),
-      ],
-    ));
+              buildInvoice(itemChunks[i], font),
+              if (i == itemChunks.length - 1) buildTotal(invoice, font),
+            ]),
+          ),
+          // pw.SizedBox(height: 1 * PdfPageFormat.cm),
+          pw.Text('Page ${i + 1} of ${itemChunks.length}',
+              textAlign: pw.TextAlign.center, style: pw.TextStyle(font: font)),
+        ],
+      ));
+    }
 
     return PdfApi.saveDocument(name: '${invoice.info.number}.pdf', pdf: pdf);
+  }
+
+  static List<List<InvoiceItem>> _chunkItems(
+      List<InvoiceItem> items, int chunkSize) {
+    List<List<InvoiceItem>> chunks = [];
+    for (int i = 0; i < items.length; i += chunkSize) {
+      chunks.add(items.sublist(
+          i, i + chunkSize > items.length ? items.length : i + chunkSize));
+    }
+    return chunks;
   }
 
   static pw.Widget buildHeader(Invoice invoice, pw.Font font) => pw.Row(
@@ -83,7 +106,6 @@ class PdfInvoiceApi {
             ],
           ),
           pw.Column(
-            // crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Container(
                 padding: const pw.EdgeInsets.all(10),
@@ -104,16 +126,6 @@ class PdfInvoiceApi {
                   data: invoice.info.number,
                 ),
               ),
-              // pw.Container(
-              //   padding: const pw.EdgeInsets.all(10),
-              //   decoration: const pw.BoxDecoration(
-              //     border: pw.Border.symmetric(
-              //       horizontal: pw.BorderSide(color: PdfColors.black, width: 1),
-              //     ),
-              //   ),
-              //   width: PdfPageFormat.a4.width - (11.5 * PdfPageFormat.cm),
-              //   // child: buildSupplierAddress(font),
-              // ),
             ],
           ),
         ],
@@ -172,8 +184,8 @@ class PdfInvoiceApi {
         ],
       );
 
-  static pw.Widget buildInvoice(Invoice invoice, pw.Font font) {
-    double calculateTotalGst(List items, double gstRate) {
+  static pw.Widget buildInvoice(List<InvoiceItem> items, pw.Font font) {
+    double calculateTotalGst(List<InvoiceItem> items, double gstRate) {
       double totalGst = 0.0;
       for (var item in items) {
         final total = item.unitPrice * item.quantity;
@@ -184,7 +196,7 @@ class PdfInvoiceApi {
     }
 
     const double gstRate = 0.09; // Example GST rate, replace with actual rate
-    final double totalGst = calculateTotalGst(invoice.items, gstRate);
+    final double totalGst = calculateTotalGst(items, gstRate);
     final headers = [
       'S.No.',
       'Description',
@@ -194,11 +206,11 @@ class PdfInvoiceApi {
       'Per',
       'Amount'
     ];
-    final data = invoice.items.map((item) {
+    final data = items.map((item) {
       final total = item.unitPrice * item.quantity;
 
       return [
-        '${invoice.items.indexOf(item) + 1}.',
+        '${item.sno}.',
         item.description,
         "123456",
         '${item.quantity}',
@@ -251,7 +263,7 @@ class PdfInvoiceApi {
           6: pw.Alignment.centerRight,
         },
         columnWidths: const {
-          0: pw.FlexColumnWidth(0.7),
+          0: pw.FlexColumnWidth(1),
           1: pw.FlexColumnWidth(6), // Custom width for Description
           2: pw.FlexColumnWidth(2), // Custom width for Quantity
           3: pw.FlexColumnWidth(2), // Custom width for Unit Price
@@ -274,13 +286,13 @@ class PdfInvoiceApi {
           6: pw.Alignment.centerRight,
         },
         columnWidths: const {
-          0: pw.FlexColumnWidth(0.7),
-          1: pw.FlexColumnWidth(6), // Custom width for Description
-          2: pw.FlexColumnWidth(2), // Custom width for Quantity
-          3: pw.FlexColumnWidth(2), // Custom width for Unit Price
-          4: pw.FlexColumnWidth(1.7), // Custom width for GST
-          5: pw.FlexColumnWidth(0.85),
-          6: pw.FlexColumnWidth(2), // Custom width for Total
+          0: pw.FlexColumnWidth(0),
+          1: pw.FlexColumnWidth(12), // Custom width for Description
+          2: pw.FlexColumnWidth(0), // Custom width for Quantity
+          3: pw.FlexColumnWidth(0), // Custom width for Unit Price
+          4: pw.FlexColumnWidth(0), // Custom width for GST
+          5: pw.FlexColumnWidth(0),
+          6: pw.FlexColumnWidth(3), // Custom width for Total
         },
       ),
     ]);
@@ -290,56 +302,91 @@ class PdfInvoiceApi {
     final netTotal = invoice.items
         .map((item) => item.unitPrice * item.quantity)
         .reduce((item1, item2) => item1 + item2);
-    // final vatPercent = invoice.items.first.vat;
     final sgst = netTotal * 0.09;
     final total = netTotal + sgst + sgst;
 
     return pw.Container(
-      alignment: pw.Alignment.centerRight,
-      child: pw.Row(
+      // alignment: pw.Alignment.centerRight,
+      child: pw.Column(
         children: [
-          pw.Spacer(flex: 6),
-          pw.Expanded(
-            flex: 4,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                buildText(
-                  title: 'Net total',
-                  value: Utils.formatPrice(netTotal),
-                  unite: true,
-                  font: font,
-                ),
-                buildText(
-                  title: 'SGST 9%',
-                  value: Utils.formatPrice(sgst),
-                  unite: true,
-                  font: font,
-                ),
-                buildText(
-                  title: 'CGST 9%',
-                  value: Utils.formatPrice(sgst),
-                  unite: true,
-                  font: font,
-                ),
-                pw.Divider(),
-                buildText(
-                  title: 'Total amount due',
-                  titleStyle: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    font: font,
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                flex: 6,
+                child: pw.Container(
+                  height: 3.2 * PdfPageFormat.cm,
+                  margin: const pw.EdgeInsets.only(right: 5),
+                  padding: const pw.EdgeInsets.all(5),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.black, width: 1),
                   ),
-                  value: Utils.formatPrice(total),
-                  unite: true,
-                  font: font,
+                  alignment: pw.Alignment.centerLeft,
+                  child: pw.RichText(
+                    text: pw.TextSpan(
+                      children: [
+                        pw.TextSpan(
+                          text: 'Amount in words:\n',
+                          style: pw.TextStyle(
+                              fontSize: 15, fontWeight: pw.FontWeight.bold),
+                        ),
+                        pw.TextSpan(
+                          text: "${Number2Words.convert(
+                            total.toStringAsFixed(2),
+                            language: Number2WordsLanguage.nepali,
+                            wordCase: WordCaseEnum.titleCase,
+                            languageNamingSystem:
+                                LanguageNamingSystem.semiNative,
+                          )} Only",
+                          style: pw.TextStyle(font: font),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                pw.SizedBox(height: 2 * PdfPageFormat.mm),
-                pw.Container(height: 1, color: PdfColors.grey400),
-                pw.SizedBox(height: 0.5 * PdfPageFormat.mm),
-                pw.Container(height: 1, color: PdfColors.grey400),
-              ],
-            ),
+              ),
+              pw.Expanded(
+                flex: 4,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    buildText(
+                      title: 'Net total',
+                      value: Utils.formatPrice(netTotal),
+                      unite: true,
+                      font: font,
+                    ),
+                    buildText(
+                      title: 'SGST 9%',
+                      value: Utils.formatPrice(sgst),
+                      unite: true,
+                      font: font,
+                    ),
+                    buildText(
+                      title: 'CGST 9%',
+                      value: Utils.formatPrice(sgst),
+                      unite: true,
+                      font: font,
+                    ),
+                    pw.Divider(),
+                    buildText(
+                      title: 'Total amount due',
+                      titleStyle: pw.TextStyle(
+                        fontSize: 14,
+                        fontWeight: pw.FontWeight.bold,
+                        font: font,
+                      ),
+                      value: Utils.formatPrice(total),
+                      unite: true,
+                      font: font,
+                    ),
+                    pw.SizedBox(height: 2 * PdfPageFormat.mm),
+                    pw.Container(height: 1, color: PdfColors.grey400),
+                    pw.SizedBox(height: 0.5 * PdfPageFormat.mm),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

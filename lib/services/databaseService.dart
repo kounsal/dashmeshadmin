@@ -31,6 +31,13 @@ class DatabaseService {
     return snapshot;
   }
 
+  Future gettingproductData(String code) async {
+    QuerySnapshot snapshot =
+        await productCollection.where("Pid", isEqualTo: code).get();
+
+    return snapshot;
+  }
+
   Future addProduct(Productmodel product) async {
     DocumentReference productDoc = await productCollection.add(
       {

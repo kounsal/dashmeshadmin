@@ -1,5 +1,3 @@
-
-
 import 'package:dashmeshadmin/models/customerModel.dart';
 
 class Invoice {
@@ -31,6 +29,7 @@ class InvoiceInfo {
 }
 
 class InvoiceItem {
+  final int sno;
   final String description;
   final DateTime date;
   final int quantity;
@@ -38,6 +37,7 @@ class InvoiceItem {
   final double unitPrice;
 
   const InvoiceItem({
+    required this.sno,
     required this.description,
     required this.date,
     required this.quantity,
